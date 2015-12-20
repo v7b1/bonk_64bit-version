@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>34981C92-B54C-416E-B559-E6FDC217AFB3</string>
+	<key>IDESourceControlProjectName</key>
+	<string>bonk~</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>58E3BE1D-A17F-4DE9-BD09-E9DC7C9BB7A2</key>
+		<string>https://github.com/v7b1/bonk_64bit-version.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>bonk~/bonk~.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>58E3BE1D-A17F-4DE9-BD09-E9DC7C9BB7A2</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/v7b1/bonk_64bit-version.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>58E3BE1D-A17F-4DE9-BD09-E9DC7C9BB7A2</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>58E3BE1D-A17F-4DE9-BD09-E9DC7C9BB7A2</string>
+			<key>IDESourceControlWCCName</key>
+			<string>bonk_64bit-version</string>
+		</dict>
+	</array>
+</dict>
+</plist>
