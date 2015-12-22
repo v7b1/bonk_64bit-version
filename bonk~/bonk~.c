@@ -188,13 +188,9 @@ typedef struct _insig
     t_hist g_hist[MAXNFILTERS];    /* history for each filter */
 #ifdef PD
     t_outlet *g_outlet;         /* outlet for raw data */
-	//t_float *g_inbuf;           /* buffered input samples */
-    //t_float *g_invec;           /* new input samples */
 #endif
 #ifdef MSP
     void *g_outlet;             /* outlet for raw data */
-	//t_sample *g_inbuf;           /* buffered input samples */
-    //t_sample *g_invec;           /* new input samples */
 #endif
     t_float *g_inbuf;           /* buffered input samples */
     t_float *g_invec;           /* new input samples */
@@ -215,10 +211,10 @@ typedef struct _bonk
     void *x_clock;
 #endif /* MSP */
     /* parameters */
+	// had to change some of the int types to long to make attributes work, not exactly sure why is this needed
     long x_npoints;          /* number of points in input buffer */
     long x_period;           /* number of input samples between analyses */
-    long x_nfilters;         /* number of filters requested */
-	// had to change these to long to make attributes work, why?
+    long	x_nfilters;         /* number of filters requested */
 	
     t_float x_halftones;    /* nominal halftones between filters */
     t_float x_overlap;
@@ -228,12 +224,12 @@ typedef struct _bonk
     t_float x_lothresh;     /* threshold for total growth to re-arm */
     t_float x_minvel;       /* minimum velocity we output */
     t_float x_maskdecay;
-    int x_masktime;
-    int x_useloudness;      /* use loudness spectra instead of power */
+    long x_masktime;
+    long x_useloudness;      /* use loudness spectra instead of power */
     t_float x_debouncedecay;
     t_float x_debouncevel;
     double x_learndebounce; /* debounce time (in "learn" mode only) */
-    int x_attackbins;       /* number of bins to wait for attack */
+    long x_attackbins;       /* number of bins to wait for attack */
 
     t_filterbank *x_filterbank;
     t_hist x_hist[MAXNFILTERS];
@@ -245,16 +241,17 @@ typedef struct _bonk
     int x_countdown;
     int x_willattack;
     int x_attacked;
-    int x_debug;
-    int x_learn;
+    long x_debug;
+    long x_learn;
     int x_learncount;           /* countup for "learn" mode */
-    int x_spew;                 /* if true, always generate output! */
+    long x_spew;                 /* if true, always generate output! */
     int x_maskphase;            /* phase, 0 to MASKHIST-1, for mask history */
     t_float x_sr;               /* current sample rate in Hz. */
     int x_hit;                  /* next "tick" called because of a hit, not a poll */
 } t_bonk;
 
 #ifdef MSP
+#pragma mark MSP function prototypes -----------
 static void *bonk_new(t_symbol *s, long ac, t_atom *av);
 static void bonk_tick(t_bonk *x);
 static void bonk_doit(t_bonk *x);
@@ -273,7 +270,7 @@ int main();
 static void bonk_thresh(t_bonk *x, t_floatarg f1, t_floatarg f2);
 static void bonk_print(t_bonk *x, t_floatarg f);
 static void bonk_bang(t_bonk *x);
-
+static void bonk_mask(t_bonk *x, long f1, t_floatarg f2);
 static void bonk_write(t_bonk *x, t_symbol *s);
 static void bonk_dowrite(t_bonk *x, t_symbol *s);
 static void bonk_writefile(t_bonk *x, char *filename, short path);
@@ -282,16 +279,8 @@ static void bonk_read(t_bonk *x, t_symbol *s);
 static void bonk_doread(t_bonk *x, t_symbol *s);
 static void bonk_openfile(t_bonk *x, char *filename, short path);
 
-void bonk_minvel_set(t_bonk *x, void *attr, long ac, t_atom *av);
 void bonk_lothresh_set(t_bonk *x, void *attr, long ac, t_atom *av);
 void bonk_hithresh_set(t_bonk *x, void *attr, long ac, t_atom *av);
-void bonk_masktime_set(t_bonk *x, void *attr, long ac, t_atom *av);
-void bonk_maskdecay_set(t_bonk *x, void *attr, long ac, t_atom *av);
-void bonk_debouncedecay_set(t_bonk *x, void *attr, long ac, t_atom *av);
-void bonk_debug_set(t_bonk *x, void *attr, long ac, t_atom *av);
-void bonk_spew_set(t_bonk *x, void *attr, long ac, t_atom *av);
-void bonk_useloudness_set(t_bonk *x, void *attr, long ac, t_atom *av);
-void bonk_attackbins_set(t_bonk *x, void *attr, long ac, t_atom *av);
 void bonk_learn_set(t_bonk *x, void *attr, long ac, t_atom *av);
 
 t_float qrsqrt(t_float f);
@@ -622,7 +611,7 @@ static void bonk_tick(t_bonk *x)
     SETFLOAT(at2+2, temperature);
 #endif
 #ifdef MSP
-	atom_setfloat(at2, nfit);
+	atom_setlong(at2, nfit);		// changed this to atom_setlong, because we have ints in maxmsp
     atom_setfloat(at2+1, vel);
     atom_setfloat(at2+2, temperature);
 #endif
@@ -924,6 +913,19 @@ static void bonk_thresh(t_bonk *x, t_floatarg f1, t_floatarg f2)
     x->x_hithresh = (f2 <= 0 ? 0.0001 : f2);
 }
 
+// make this also available to MSP -- first argument is an interger
+#ifdef MSP
+static void bonk_mask(t_bonk *x, long f1, t_floatarg f2)
+{
+    int ticks = f1;
+    if (ticks < 0) ticks = 0;
+    if (f2 < 0) f2 = 0;
+    else if (f2 > 1) f2 = 1;
+    x->x_masktime = ticks;
+    x->x_maskdecay = f2;
+}
+#endif
+
 #ifdef PD
 static void bonk_mask(t_bonk *x, t_floatarg f1, t_floatarg f2)
 {
@@ -934,6 +936,7 @@ static void bonk_mask(t_bonk *x, t_floatarg f1, t_floatarg f2)
     x->x_masktime = ticks;
     x->x_maskdecay = f2;
 }
+
 
 static void bonk_debounce(t_bonk *x, t_floatarg f1)
 {
@@ -1428,7 +1431,7 @@ void bonk_tilde_setup(void)
     class_addmethod(bonk_class, (t_method)bonk_learn, gensym("learn"), A_FLOAT, 0);
     class_addmethod(bonk_class, (t_method)bonk_forget, gensym("forget"), 0);
     class_addmethod(bonk_class, (t_method)bonk_thresh, gensym("thresh"), A_FLOAT, A_FLOAT, 0);
-    class_addmethod(bonk_class, (t_method)bonk_mask, gensym("mask"), A_FLOAT, A_FLOAT, 0);
+    class_addmethod(bonk_class, (t_method)bonk_mask, gensym("mask"), A_LONG, A_FLOAT, 0);
     class_addmethod(bonk_class, (t_method)bonk_debounce, gensym("debounce"), A_FLOAT, 0);
     class_addmethod(bonk_class, (t_method)bonk_minvel, gensym("minvel"), A_FLOAT, 0);
     class_addmethod(bonk_class, (t_method)bonk_print, gensym("print"), A_DEFFLOAT, 0);
@@ -1449,77 +1452,125 @@ void bonk_tilde_setup(void)
 
 int C74_EXPORT main(void)
 {       
-t_class *c;
-	t_object *attr;
-	long attrflags = 0;
-	t_symbol *sym_long = gensym("long"), *sym_float32 = gensym("float32");
-	//*sym_float64 = gensym("float64");
-
+	t_class *c;
 	c = class_new("bonk~", (method)bonk_new, (method)bonk_free, sizeof(t_bonk), (method)0L, A_GIMME, 0);
 	
-	class_obexoffset_set(c, calcoffset(t_bonk, obex));
-	
-	// TODO: check attributes again, something is still not right
-	attr = attr_offset_new("npoints", sym_long, attrflags, (method)0L, (method)0L, calcoffset(t_bonk, x_npoints));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("hop", sym_long, attrflags, (method)0L, (method)0L, calcoffset(t_bonk, x_period));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("nfilters", sym_long, attrflags, (method)0L, (method)0L, calcoffset(t_bonk, x_nfilters));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("halftones", sym_float32, attrflags, (method)0L, (method)0L, calcoffset(t_bonk, x_halftones));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("overlap", sym_float32, attrflags, (method)0L, (method)0L, calcoffset(t_bonk, x_overlap));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("firstbin", sym_float32, attrflags, (method)0L, (method)0L, calcoffset(t_bonk, x_firstbin));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("minbandwidth", sym_float32, attrflags, (method)0L, (method)0L, calcoffset(t_bonk, x_minbandwidth));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("minvel", sym_float32, attrflags, (method)0L, (method)bonk_minvel_set, calcoffset(t_bonk, x_minvel));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("lothresh", sym_float32, attrflags, (method)0L, (method)bonk_lothresh_set, calcoffset(t_bonk, x_lothresh));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("hithresh", sym_float32, attrflags, (method)0L, (method)bonk_hithresh_set, calcoffset(t_bonk, x_hithresh));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("masktime", sym_long, attrflags, (method)0L, (method)bonk_masktime_set, calcoffset(t_bonk, x_masktime));
-	class_addattr(c, attr);
-	
-	attr = attr_offset_new("maskdecay", sym_float32, attrflags, (method)0L, (method)bonk_maskdecay_set, calcoffset(t_bonk, x_maskdecay));
-	class_addattr(c, attr);
 
-	attr = attr_offset_new("debouncedecay", sym_float32, attrflags, (method)0L, (method)bonk_debouncedecay_set, calcoffset(t_bonk, x_debouncedecay));
-	class_addattr(c, attr);
+	CLASS_ATTR_LONG(c, "npoints", 0, t_bonk, x_npoints);
+	CLASS_ATTR_SAVE(c, "npoints", 0);
+	CLASS_ATTR_FILTER_MIN(c, "npoints", MINPOINTS);
+	CLASS_ATTR_LABEL(c,"npoints", 0, "number of points in input buffer");
 	
-	attr = attr_offset_new("debug", sym_long, attrflags, (method)0L, (method)bonk_debug_set, calcoffset(t_bonk, x_debug));
-	class_addattr(c, attr);
+	CLASS_ATTR_LONG(c, "hop", 0, t_bonk, x_period);
+	CLASS_ATTR_SAVE(c, "hop", 0);
+	CLASS_ATTR_FILTER_MIN(c, "hop", 1);
+	CLASS_ATTR_LABEL(c,"hop", 0, "number of input samples between analyses");
 	
-	attr = attr_offset_new("spew", sym_long, attrflags, (method)0L, (method)bonk_spew_set, calcoffset(t_bonk, x_spew));
-	class_addattr(c, attr);
+	CLASS_ATTR_LONG(c, "nfilters", 0, t_bonk, x_nfilters);
+	CLASS_ATTR_SAVE(c, "nfilters", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"nfilters", 1, MAXNFILTERS);
+	CLASS_ATTR_LABEL(c,"nfilters", 0, "number of filters");
 	
-	attr = attr_offset_new("useloudness", sym_long, attrflags, (method)0L, (method)bonk_useloudness_set, calcoffset(t_bonk, x_useloudness));
-	class_addattr(c, attr);
+	CLASS_ATTR_FLOAT(c,"halftones", 0, t_bonk, x_halftones);
+	CLASS_ATTR_SAVE(c, "halftones", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"halftones", 0.01, 12.0);
+	CLASS_ATTR_LABEL(c,"halftones", 0, "nominal halftones between filters");
+	
+	CLASS_ATTR_FLOAT(c,"overlap", 0, t_bonk, x_overlap);
+	CLASS_ATTR_SAVE(c, "overlap", 0);
+	CLASS_ATTR_FILTER_MIN(c,"overlap", 1);
+	CLASS_ATTR_LABEL(c,"overlap", 0, "overlap");
+	
+	CLASS_ATTR_FLOAT(c,"firstbin", 0, t_bonk, x_firstbin);
+	CLASS_ATTR_SAVE(c, "firstbin", 0);
+	CLASS_ATTR_FILTER_MIN(c,"firstbin", 0.5);
+	CLASS_ATTR_LABEL(c,"firstbin", 0, "firstbin");
+	
+	CLASS_ATTR_FLOAT(c,"minbandwidth", 0, t_bonk, x_minbandwidth);
+	CLASS_ATTR_SAVE(c, "minbandwidth", 0);
+	CLASS_ATTR_LABEL(c,"minbandwidth", 0, "minimum bandwidth");
+	
+	CLASS_ATTR_FLOAT(c,"minvel", 0, t_bonk, x_minvel);
+	CLASS_ATTR_SAVE(c, "minvel", 0);
+	CLASS_ATTR_FILTER_MIN(c,"minvel", 0);
+	CLASS_ATTR_LABEL(c,"minvel", 0, "minimum velocity we output");
+	
+	CLASS_ATTR_FLOAT(c,"lothresh", 0, t_bonk, x_lothresh);
+	CLASS_ATTR_SAVE(c, "lothresh", 0);
+	CLASS_ATTR_ACCESSORS(c, "lothresh", 0, bonk_lothresh_set);
+	CLASS_ATTR_LABEL(c,"lothresh", 0, "threshold for total growth to re-arm");
+	
+	CLASS_ATTR_FLOAT(c,"hithresh", 0, t_bonk, x_hithresh);
+	CLASS_ATTR_SAVE(c, "hithresh", 0);
+	CLASS_ATTR_ACCESSORS(c, "hithresh", 0, bonk_hithresh_set);
+	CLASS_ATTR_LABEL(c,"hithresh", 0, "threshold for total growth to trigger");
+	
+	CLASS_ATTR_LONG(c, "masktime", 0, t_bonk, x_masktime);
+	CLASS_ATTR_SAVE(c, "masktime", 0);
+	CLASS_ATTR_FILTER_MIN(c,"masktime", 0);
+	CLASS_ATTR_LABEL(c,"masktime", 0, "mask time");
+	
+	CLASS_ATTR_FLOAT(c, "maskdecay", 0, t_bonk, x_maskdecay);
+	CLASS_ATTR_SAVE(c, "maskdecay", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"maskdecay", 0.0, 1.0);
+	CLASS_ATTR_LABEL(c,"maskdecay", 0, "mask decay");
+	
+	CLASS_ATTR_FLOAT(c, "debouncedecay", 0, t_bonk, x_debouncedecay);
+	CLASS_ATTR_SAVE(c, "debouncedecay", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"debouncedecay", 0.0, 1.0);
+	CLASS_ATTR_LABEL(c,"debouncedecay", 0, "Minimum time (msec) between attacks in learn mode");
+	
+	CLASS_ATTR_LONG(c, "debug", 0, t_bonk, x_debug);
+	CLASS_ATTR_SAVE(c, "debug", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"debug", 0, 1);
+	CLASS_ATTR_LABEL(c,"debug", 0, "debug on/off");
+	
+	CLASS_ATTR_LONG(c, "spew", 0, t_bonk, x_spew);
+	CLASS_ATTR_SAVE(c, "spew", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"spew", 0, 1);
+	CLASS_ATTR_LABEL(c,"spew", 0, "spew flag");
+	
+	CLASS_ATTR_LONG(c, "useloudness", 0, t_bonk, x_useloudness);
+	CLASS_ATTR_SAVE(c, "useloudness", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"useloudness", 0, 1);
+	CLASS_ATTR_LABEL(c,"useloudness", 0, "use loudness spectra instead of power");
 
-	attr = attr_offset_new("attackframes", sym_long, attrflags, (method)0L, (method)bonk_attackbins_set, calcoffset(t_bonk, x_attackbins));
-	class_addattr(c, attr);
+	CLASS_ATTR_LONG(c, "attackframes", 0, t_bonk, x_attackbins);
+	CLASS_ATTR_SAVE(c, "attackframes", 0);
+	CLASS_ATTR_FILTER_CLIP(c,"attackframes", 1, MASKHIST);
+	CLASS_ATTR_LABEL(c,"attackframes", 0, "number of frames to wait for attack");
 	
-	attr = attr_offset_new("learn", sym_long, attrflags, (method)0L, (method)bonk_learn_set, calcoffset(t_bonk, x_learn));
-	class_addattr(c, attr);
+	CLASS_ATTR_LONG(c,"learn", 0, t_bonk, x_learn);
+	CLASS_ATTR_SAVE(c, "learn", 0);
+	CLASS_ATTR_ACCESSORS(c, "learn", 0, bonk_learn_set);
+	CLASS_ATTR_LABEL(c,"learn", 0, "learn");
+	
+	// attribute display order:
+	CLASS_ATTR_ORDER(c, "npoints",	0, "1");
+	CLASS_ATTR_ORDER(c, "hop",	0, "2");
+	CLASS_ATTR_ORDER(c, "nfilters", 0, "3");
+	CLASS_ATTR_ORDER(c, "halftones", 0, "4");
+	CLASS_ATTR_ORDER(c, "overlap", 0, "5");
+	CLASS_ATTR_ORDER(c, "halftones", 0, "6");
+	CLASS_ATTR_ORDER(c, "firstbin", 0, "7");
+	CLASS_ATTR_ORDER(c, "minbandwidth", 0, "8");
+	CLASS_ATTR_ORDER(c, "minlevel", 0, "9");
+	CLASS_ATTR_ORDER(c, "lothresh", 0, "10");
+	CLASS_ATTR_ORDER(c, "hithresh", 0, "11");
+	CLASS_ATTR_ORDER(c, "masktime", 0, "12");
+	CLASS_ATTR_ORDER(c, "maskdecay", 0, "13");
+	CLASS_ATTR_ORDER(c, "learn", 0, "14");
+	CLASS_ATTR_ORDER(c, "debouncedecay", 0, "15");
+	CLASS_ATTR_ORDER(c, "spew", 0, "16");
+	CLASS_ATTR_ORDER(c, "useloudness", 0, "17");
+	CLASS_ATTR_ORDER(c, "debug", 0, "18");
+	
 
 	class_addmethod(c, (method)bonk_dsp64, "dsp64", A_CANT, 0);
 	class_addmethod(c, (method)bonk_bang, "bang", A_CANT, 0);
 	class_addmethod(c, (method)bonk_forget, "forget", 0);
 	class_addmethod(c, (method)bonk_thresh, "thresh", A_FLOAT, A_FLOAT, 0);
-	//class_addmethod(c, (method)bonk_mask, "mask", A_FLOAT, A_FLOAT, 0);
-	// there is no mask method in MSP version
+	class_addmethod(c, (method)bonk_mask, "mask", A_FLOAT, A_FLOAT, 0);
 	class_addmethod(c, (method)bonk_print, "print", A_DEFFLOAT, 0);
 	class_addmethod(c, (method)bonk_read, "read", A_DEFSYM, 0);
 	class_addmethod(c, (method)bonk_write, "write", A_DEFSYM, 0);
@@ -1589,7 +1640,6 @@ static void *bonk_new(t_symbol *s, long ac, t_atom *av)
         }
         if (x->x_ninsig < 1) x->x_ninsig = 1;
         if (x->x_ninsig > MAXCHANNELS) x->x_ninsig = MAXCHANNELS;
-        //post("ninsig: %ld", x->x_ninsig);
 		
         attr_args_process(x, ac, av);   
 
@@ -1619,21 +1669,13 @@ static void *bonk_new(t_symbol *s, long ac, t_atom *av)
 }
 
 /* Attribute setters. */
-void bonk_minvel_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        t_float f = atom_getfloat(av);
-        if (f < 0) f = 0; 
-        x->x_minvel = f;
-    }
-}
 
 void bonk_lothresh_set(t_bonk *x, void *attr, long ac, t_atom *av)
 {
     if (ac && av) {
         t_float f = atom_getfloat(av);
         if (f > x->x_hithresh)
-            post("bonk: warning: low threshold greater than hi threshold");
+            object_warn((t_object*)x, "bonk: warning: low threshold greater than hi threshold");
         x->x_lothresh = (f <= 0 ? 0.0001 : f);
     }
 }
@@ -1643,72 +1685,8 @@ void bonk_hithresh_set(t_bonk *x, void *attr, long ac, t_atom *av)
     if (ac && av) {
         t_float f = atom_getfloat(av);
         if (f < x->x_lothresh)
-            post("bonk: warning: low threshold greater than hi threshold");
+           object_warn((t_object*)x, "bonk: warning: low threshold greater than hi threshold");
         x->x_hithresh = (f <= 0 ? 0.0001 : f);
-    }
-}
-
-void bonk_masktime_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        int n = atom_getlong(av);
-        x->x_masktime = (n < 0) ? 0 : n;
-    }
-}
-
-void bonk_maskdecay_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        t_float f = atom_getfloat(av);
-        f = (f < 0) ? 0 : f;
-        f = (f > 1) ? 1 : f;
-        x->x_maskdecay = f;
-    }
-}
-
-void bonk_debouncedecay_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        t_float f = atom_getfloat(av);
-        f = (f < 0) ? 0 : f;
-        f = (f > 1) ? 1 : f;
-        x->x_debouncedecay = f;
-    }
-}
-
-void bonk_debug_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        int n = atom_getlong(av);
-        x->x_debug = (n != 0);
-    }
-}
-
-void bonk_spew_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        int n = atom_getlong(av);
-		post("spew %ld", n);
-        x->x_spew = (n != 0);
-		
-    }
-}
-
-void bonk_useloudness_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        int n = atom_getlong(av);
-        x->x_useloudness = (n != 0);
-    }
-}
-
-void bonk_attackbins_set(t_bonk *x, void *attr, long ac, t_atom *av)
-{
-    if (ac && av) {
-        int n = atom_getlong(av);
-        n = (n < 1) ? 1 : n;
-        n = (n > MASKHIST) ? MASKHIST : n;
-        x->x_attackbins = n;
     }
 }
 
@@ -1735,7 +1713,7 @@ void bonk_assist(t_bonk *x, void *b, long m, long a, char *s)
 		}
 	}
 	else {
-		switch(a) {
+		switch(a) {		// doesn't work correctly, yet, when more than one input!
 			case 0: sprintf(s, "(list) raw output"); break;
 			case 1: sprintf (s,"(list) cooked output"); break;
 			case 2: sprintf (s, "(list) attributes");
