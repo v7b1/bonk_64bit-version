@@ -265,7 +265,7 @@ void bonk_dsp64(t_bonk *x, t_object *dsp64, short *count, double samplerate, lon
 void bonk_assist(t_bonk *x, void *b, long m, long a, char *s);
 static void bonk_free(t_bonk *x);
 void bonk_setup(void);
-int main();
+//int main();
 
 static void bonk_thresh(t_bonk *x, t_floatarg f1, t_floatarg f2);
 static void bonk_print(t_bonk *x, t_floatarg f);
@@ -1442,7 +1442,7 @@ void bonk_tilde_setup(void)
     class_addmethod(bonk_class, (t_method)bonk_attackbins, gensym("attack-frames"), A_DEFFLOAT, 0);
     class_addmethod(bonk_class, (t_method)bonk_read, gensym("read"), A_SYMBOL, 0);
     class_addmethod(bonk_class, (t_method)bonk_write, gensym("write"), A_SYMBOL, 0);
-    post("bonk version 1.5");
+    post("bonk version 1.5.1");
 }
 #endif
 
@@ -1570,7 +1570,7 @@ int C74_EXPORT main(void)
 	class_addmethod(c, (method)bonk_bang, "bang", A_CANT, 0);
 	class_addmethod(c, (method)bonk_forget, "forget", 0);
 	class_addmethod(c, (method)bonk_thresh, "thresh", A_FLOAT, A_FLOAT, 0);
-	class_addmethod(c, (method)bonk_mask, "mask", A_FLOAT, A_FLOAT, 0);
+	class_addmethod(c, (method)bonk_mask, "mask", A_LONG, A_FLOAT, 0);
 	class_addmethod(c, (method)bonk_print, "print", A_DEFFLOAT, 0);
 	class_addmethod(c, (method)bonk_read, "read", A_DEFSYM, 0);
 	class_addmethod(c, (method)bonk_write, "write", A_DEFSYM, 0);
