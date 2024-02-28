@@ -1554,7 +1554,7 @@ int C74_EXPORT main(void)
 	CLASS_ATTR_ORDER(c, "halftones", 0, "6");
 	CLASS_ATTR_ORDER(c, "firstbin", 0, "7");
 	CLASS_ATTR_ORDER(c, "minbandwidth", 0, "8");
-	CLASS_ATTR_ORDER(c, "minlevel", 0, "9");
+	CLASS_ATTR_ORDER(c, "minvel", 0, "9");
 	CLASS_ATTR_ORDER(c, "lothresh", 0, "10");
 	CLASS_ATTR_ORDER(c, "hithresh", 0, "11");
 	CLASS_ATTR_ORDER(c, "masktime", 0, "12");
